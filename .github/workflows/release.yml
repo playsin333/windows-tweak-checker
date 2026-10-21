@@ -6,6 +6,11 @@ on:
     branches: [main]
     paths: ['PLAYSIN TWEAK CHECK.bat', 'CHANGELOG.md', '.github/workflows/release.yml']
   workflow_dispatch:
+    inputs:
+      force:
+        description: Перевыпустить релиз этой версии, если он уже есть
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -25,6 +30,10 @@ jobs:
           [ -n "$ver" ] || { echo 'Не нашёл $TcVersion в батнике'; exit 1; }
           echo "Версия: $ver"
           echo "tag=v$ver" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.force }}" = "true" ] && gh release view "v$ver" > /dev/null 2>&1; then
+            echo "Перевыпускаю v$ver"
+            gh release delete "v$ver" --cleanup-tag --yes
+          fi
           if gh release view "v$ver" > /dev/null 2>&1; then
             echo "Релиз v$ver уже есть, пропускаю"
             echo "skip=true" >> "$GITHUB_OUTPUT"
