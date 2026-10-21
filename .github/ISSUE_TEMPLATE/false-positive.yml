@@ -1,0 +1,46 @@
+name: Ложное срабатывание
+description: Чекер нашёл твик на Windows, которую никто не трогал
+title: "[Ложное] "
+labels: ["ложное срабатывание"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что помогаешь сделать проверку точнее. По отчёту я поправлю стоковое значение.
+  - type: input
+    id: check
+    attributes:
+      label: Какая строка сработала
+      description: Скопируй строку с [ТВИК] или [СЛЕД] из отчёта
+      placeholder: "[ТВИК] Таймер (GlobalTimerResolutionRequests): 1 (сток: 0)"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows
+      description: Строка «Windows» из шапки отчёта
+      placeholder: Windows 11 Pro 24H2 (сборка 26100.4351)
+    validations:
+      required: true
+  - type: dropdown
+    id: origin
+    attributes:
+      label: Откуда эта Windows
+      options:
+        - Только что установлена с образа Microsoft
+        - Предустановлена производителем ноутбука или ПК
+        - Стоит давно, но оптимизаторы не запускались
+        - Не знаю
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Отчёт
+      description: Перетащи сюда файл «Твик-чекер <дата>.txt» с рабочего стола
+  - type: textarea
+    id: notes
+    attributes:
+      label: Что ещё стоит знать
+      description: Программы производителя, античиты, драйверы, которые могли поменять значение

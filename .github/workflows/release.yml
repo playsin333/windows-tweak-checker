@@ -1,0 +1,44 @@
+name: Релиз
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Архив и заметки к релизу
+        run: |
+          mkdir dist
+          zip -X dist/PLAYSIN-TWEAK-CHECK.zip "PLAYSIN TWEAK CHECK.bat" README.md LICENSE
+          cp "PLAYSIN TWEAK CHECK.bat" dist/PLAYSIN-TWEAK-CHECK.bat
+          ver="${GITHUB_REF_NAME#v}"
+          awk -v v="$ver" 'index($0, "## [" v "]") == 1 { f = 1; next } /^## \[/ { f = 0 } f' CHANGELOG.md > notes.md
+          (cd dist && sha256sum PLAYSIN-TWEAK-CHECK.zip PLAYSIN-TWEAK-CHECK.bat > SHA256SUMS.txt)
+          {
+            cat notes.md
+            echo
+            echo '**Скачать:** `PLAYSIN-TWEAK-CHECK.zip`, распаковать и запустить `PLAYSIN TWEAK CHECK.bat`.'
+            echo
+            echo '<details><summary>SHA-256</summary>'
+            echo
+            echo '```'
+            cat dist/SHA256SUMS.txt
+            echo '```'
+            echo '</details>'
+          } > body.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PLAYSIN TWEAK CHECK ${{ github.ref_name }}
+          body_path: body.md
+          files: |
+            dist/PLAYSIN-TWEAK-CHECK.zip
+            dist/PLAYSIN-TWEAK-CHECK.bat
+            dist/SHA256SUMS.txt

@@ -1,0 +1,3 @@
+# Батник храним как есть, с CRLF: с LF cmd.exe может сломаться
+*.bat -text
+*.png binary

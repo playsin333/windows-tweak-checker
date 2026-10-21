@@ -1,0 +1,27 @@
+name: Предложить проверку
+description: Твик или оптимизатор, который чекер пока не видит
+title: "[Проверка] "
+labels: ["новая проверка"]
+body:
+  - type: input
+    id: what
+    attributes:
+      label: Что это
+      description: Название оптимизатора, твик-пака или самого твика
+      placeholder: Например, Hone или отключение HPET
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Что он меняет
+      description: Пути в реестре, службы, команды, схемы питания. Чем точнее, тем быстрее добавлю
+      placeholder: |
+        HKLM\SYSTEM\...\Имя = значение (сток: значение)
+    validations:
+      required: true
+  - type: textarea
+    id: traces
+    attributes:
+      label: Какие следы остаются
+      description: Папки, файлы, задачи планировщика, точки восстановления, процессы

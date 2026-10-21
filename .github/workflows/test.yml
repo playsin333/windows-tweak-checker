@@ -1,0 +1,75 @@
+name: Тест на Windows
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Батник в CRLF и без BOM
+        shell: pwsh
+        run: |
+          $b = [IO.File]::ReadAllBytes('PLAYSIN TWEAK CHECK.bat')
+          if ($b[0] -eq 0xEF) { throw 'В начале файла BOM, cmd его не поймёт' }
+          $t = [Text.Encoding]::UTF8.GetString($b)
+          if (($t -replace "`r`n", '') -match "`n") { throw 'Есть строки с LF без CR' }
+
+      - name: Синтаксис в Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $e = $null; $k = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'PLAYSIN TWEAK CHECK.bat').Path, [ref]$k, [ref]$e)
+          if ($e) { $e | ForEach-Object { "$($_.Extent.StartLineNumber): $($_.Message)" }; exit 1 }
+
+      - name: Только чтение
+        shell: pwsh
+        run: |
+          $rx = '\b(Set-ItemProperty|New-ItemProperty|Remove-ItemProperty|Remove-Item|Set-Service|Stop-Service|Disable-ScheduledTask|Unregister-ScheduledTask|Set-MpPreference|Add-MpPreference|Disable-MMAgent|Enable-MMAgent|Checkpoint-Computer|\.SetValue|\.DeleteValue|\.CreateSubKey)\b|reg(\.exe)?\s+(add|delete|import)|sc(\.exe)?\s+config|''/(setactive|setacvalueindex|change|delete|hibernate|set|deletevalue)'''
+          $bad = Select-String -Path 'PLAYSIN TWEAK CHECK.bat' -Pattern $rx
+          if ($bad) { $bad; throw 'Чекер должен только читать' }
+
+      - name: Запуск
+        shell: cmd
+        env:
+          TC_NOWAIT: '1'
+        run: |
+          if not exist "%USERPROFILE%\Desktop" mkdir "%USERPROFILE%\Desktop"
+          call "PLAYSIN TWEAK CHECK.bat" > run.log 2>&1
+          type run.log
+
+      - name: Отчёт на месте и без ошибок
+        shell: pwsh
+        run: |
+          $rep = Get-ChildItem "$env:USERPROFILE\Desktop" -Filter 'Твик-чекер*.txt' | Select-Object -First 1
+          if (-not $rep) { throw 'Отчёт не создан' }
+          Copy-Item $rep.FullName report.txt
+          $text = Get-Content report.txt -Raw -Encoding utf8
+          if ($text -notmatch 'ТВИКОВ НАЙДЕНО') { throw 'В отчёте нет итога' }
+          $log = Get-Content run.log -Raw -Encoding utf8
+          if ($log -match '\[ОШИБ\]|Ошибка:') { throw 'Во время проверки были ошибки, смотри run.log' }
+          "### ${{ matrix.os }}" >> $env:GITHUB_STEP_SUMMARY
+          '```' >> $env:GITHUB_STEP_SUMMARY
+          ($text -split "`r?`n" | Where-Object { $_ -match 'ТВИКОВ|Ручных|Следов|Вывод' }) >> $env:GITHUB_STEP_SUMMARY
+          '```' >> $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-${{ matrix.os }}
+          path: |
+            report.txt
+            run.log
