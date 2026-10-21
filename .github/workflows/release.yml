@@ -1,8 +1,11 @@
 name: Релиз
 
+# Релиз выходит сам, когда в батнике новая $TcVersion, которой ещё нет среди релизов
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['PLAYSIN TWEAK CHECK.bat', 'CHANGELOG.md']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,12 +16,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Версия из батника
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(grep -oP "^\$TcVersion\s*=\s*'\K[^']+" "PLAYSIN TWEAK CHECK.bat")
+          echo "Версия: $ver"
+          echo "tag=v$ver" >> "$GITHUB_OUTPUT"
+          if gh release view "v$ver" > /dev/null 2>&1; then
+            echo "Релиз v$ver уже есть, пропускаю"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Архив и заметки к релизу
+        if: steps.ver.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
         run: |
           mkdir dist
           zip -X dist/PLAYSIN-TWEAK-CHECK.zip "PLAYSIN TWEAK CHECK.bat" README.md LICENSE
           cp "PLAYSIN TWEAK CHECK.bat" dist/PLAYSIN-TWEAK-CHECK.bat
-          ver="${GITHUB_REF_NAME#v}"
+          ver="${TAG#v}"
           awk -v v="$ver" 'index($0, "## [" v "]") == 1 { f = 1; next } /^## \[/ { f = 0 } f' CHANGELOG.md > notes.md
           (cd dist && sha256sum PLAYSIN-TWEAK-CHECK.zip PLAYSIN-TWEAK-CHECK.bat > SHA256SUMS.txt)
           {
@@ -35,8 +54,11 @@ jobs:
           } > body.md
 
       - uses: softprops/action-gh-release@v2
+        if: steps.ver.outputs.skip != 'true'
         with:
-          name: PLAYSIN TWEAK CHECK ${{ github.ref_name }}
+          tag_name: ${{ steps.ver.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: PLAYSIN TWEAK CHECK ${{ steps.ver.outputs.tag }}
           body_path: body.md
           files: |
             dist/PLAYSIN-TWEAK-CHECK.zip
