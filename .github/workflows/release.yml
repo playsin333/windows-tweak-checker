@@ -4,7 +4,7 @@ name: Релиз
 on:
   push:
     branches: [main]
-    paths: ['PLAYSIN TWEAK CHECK.bat', 'CHANGELOG.md']
+    paths: ['PLAYSIN TWEAK CHECK.bat', 'CHANGELOG.md', '.github/workflows/release.yml']
   workflow_dispatch:
 
 permissions:
