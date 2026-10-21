@@ -21,7 +21,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ver=$(grep -oP "^\$TcVersion\s*=\s*'\K[^']+" "PLAYSIN TWEAK CHECK.bat")
+          ver=$(grep -oP "TcVersion\s*=\s*'\K[^']+" "PLAYSIN TWEAK CHECK.bat" | head -1)
+          [ -n "$ver" ] || { echo 'Не нашёл $TcVersion в батнике'; exit 1; }
           echo "Версия: $ver"
           echo "tag=v$ver" >> "$GITHUB_OUTPUT"
           if gh release view "v$ver" > /dev/null 2>&1; then
