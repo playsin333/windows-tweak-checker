@@ -11,8 +11,8 @@ body:
     id: check
     attributes:
       label: Какая строка сработала
-      description: Скопируй строку с [ТВИК] или [СЛЕД] из отчёта
-      placeholder: "[ТВИК] Таймер (GlobalTimerResolutionRequests): 1 (сток: 0)"
+      description: Скопируй строку с оценкой ([ПОЛЬЗА], [ПЛАЦЕБО], [СПОРНО], [ВРЕД], [ОПАСНО]) или [СЛЕД] из отчёта
+      placeholder: "[СПОРНО]  Таймер (GlobalTimerResolutionRequests): 1 (сток: 0)"
     validations:
       required: true
   - type: input

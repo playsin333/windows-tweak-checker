@@ -60,12 +60,12 @@ jobs:
           if (-not $rep) { throw 'Отчёт не создан' }
           Copy-Item $rep.FullName report.txt
           $text = Get-Content report.txt -Raw -Encoding utf8
-          if ($text -notmatch 'ТВИКОВ НАЙДЕНО') { throw 'В отчёте нет итога' }
+          if ($text -notmatch 'ИТОГ') { throw 'В отчёте нет итога' }
           $log = Get-Content run.log -Raw -Encoding utf8
-          if ($log -match '\[ОШИБ\]|Ошибка:') { throw 'Во время проверки были ошибки, смотри run.log' }
+          if ($text -match '\[ОШИБ\]' -or $log -match 'Ошибка:') { throw 'Во время проверки были ошибки, смотри report.txt и run.log' }
           "### ${{ matrix.os }}" >> $env:GITHUB_STEP_SUMMARY
           '```' >> $env:GITHUB_STEP_SUMMARY
-          ($text -split "`r?`n" | Where-Object { $_ -match 'ТВИКОВ|Ручных|Следов|Вывод' }) >> $env:GITHUB_STEP_SUMMARY
+          ($text -split "`r?`n" | Where-Object { $_ -match 'Опасно:|Вывод|Где:' }) >> $env:GITHUB_STEP_SUMMARY
           '```' >> $env:GITHUB_STEP_SUMMARY
 
       - uses: actions/upload-artifact@v4
